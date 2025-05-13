@@ -89,7 +89,7 @@ def get_system_cola(M, N, n):
     pos = np.hstack((np.eye(2), np.zeros(
         (2, 2))))  # matrix to select position out of state
 
-    matrices = []
+    list_cola = []
     for k in range(N):  # timestep
         for v1 in range(M):  # player 1
             for v2 in range(v1 + 1, M):  # player 2
@@ -99,19 +99,36 @@ def get_system_cola(M, N, n):
                 c_block[ind1] = pos
                 c_block[ind2] = -1 * pos
                 C_cola = np.hstack(c_block)
-                matrices.append(C_cola)
-    return matrices
+                list_cola.append(C_cola)
+    return list_cola
 
 
-def C_cola(X, U, r, matrices):
+def C_cola(X, U, r, list_cola):
     """collision avoidance inequality constraint: 
     r - (C_cola_k_v1_v2 @ X).T @ (C_cola_k_v1_v2 @ X) <= 0"""
-    C_k_v1_v2 = [r - (C_k @ X).T @ (C_k @ X) for C_k in matrices]
+    C_k_v1_v2 = [r - (C_k @ X).T @ (C_k @ X) for C_k in list_cola]
     return np.array(C_k_v1_v2)
 
 
-def grad_C_cola(X, U, r, matrices):
+def grad_C_cola(X, U, r, list_cola):
     """gradient wrt X, U"""
-    C_x = np.vstack([-X.T @ C_k.T @ C_k for C_k in matrices])
+    C_x = np.vstack([-X.T @ C_k.T @ C_k for C_k in list_cola])
     C_u = np.zeros((np.shape(C_x)[0], len(U)))
     return np.hstack((C_x, C_u))
+
+
+# all constraints combined
+def C(X, U, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola):
+    c_wall = C_wall(X, U, C_wall_sys, D_wall_sys)
+    c_input = C_input(X, U, F_sys, G_sys)
+    c_cola = C_cola(X, U, r, list_cola)
+    return np.vstack((c_wall, c_input, c_cola))
+
+
+def grad_C(X, U, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola):
+    c_wall = grad_C_wall(X, U, C_wall_sys, D_wall_sys)
+    c_input = grad_C_input(X, U, F_sys, G_sys)
+    c_cola = grad_C_cola(X, U, r, list_cola)
+    return np.vstack((c_wall, c_input, c_cola))
+
+# TODO gradient penalty in aug lagrangian calcs

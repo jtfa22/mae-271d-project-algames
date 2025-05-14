@@ -9,7 +9,7 @@ Args:
 Returns:
     lamb: updated Lagrangian multiplier vector
 """
-def dual_ascent_update(lamb, rho, C, k_nci, gamma):
+def dual_ascent_update(lamb, rho, C, k_nci):
     lamb = lamb + rho*C
 
     # ineq constraints: lambda = max(0, lambda + rho*C)

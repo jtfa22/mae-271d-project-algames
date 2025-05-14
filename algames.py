@@ -60,6 +60,7 @@ def ALGAMES(
             Q,
             Qf,
             R,
+            x0,
             xf,
             A_sys,
             B_sys,

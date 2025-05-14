@@ -71,6 +71,7 @@ def grad_aug_lagrangian(
     Q,
     Qf,
     R,
+    x0,
     xf,
     A_sys,
     B_sys,
@@ -109,4 +110,5 @@ def grad_aug_lagrangian(
         grad_L_v(mu_v, lam, grad_J_v, grad_D, grad_C, grad_penalty)
         for mu_v, grad_J_v in zip(np.split(mu, M), list_grad_J_v)
     ]
+    g_players.append(dynamics.D(X, U, A_sys, B_sys, E_sys, x0))
     return np.hstack(g_players)

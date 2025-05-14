@@ -1,10 +1,12 @@
 # MAE 271D Project
 # ALGAMES implementation
 
+import aug_lagrangian
+import constraints
+import dynamics
 import numpy as np
+import objective
 from scipy import linalg, optimize
-
-from . import aug_lagrangian, constraints, dynamics, objective
 
 
 # function that runs algames solver once

@@ -1,10 +1,10 @@
 # MAE 271D Project
 # ALGAMES implementation
 
+import constraints
+import dynamics
 import numpy as np
-from scipy import linalg
-
-from . import constraints, dynamics, objective
+import objective
 
 
 # penalty matrix

@@ -30,7 +30,7 @@ def get_system_dynamics(M, N, n, m, dt):
     A_eq, B_eq, E_eq = get_player_dynamics(N, n, m, dt)
     A_sys = linalg.block_diag(*([A_eq] * M))
     B_sys = linalg.block_diag(*([B_eq] * M))
-    E_sys = linalg.block_diag(*([E_eq] * M))
+    E_sys = np.vstack(([E_eq] * M))
     return A_sys, B_sys, E_sys
 
 

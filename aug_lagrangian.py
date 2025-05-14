@@ -36,11 +36,12 @@ def grad_penalty(X, U, Irho, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola)
     size_cola = len(list_cola)
     assert size_wall + size_input + size_cola == len(irho_vec)
     irho3_vec = irho_vec[size_wall + size_input :]
-    c_cola_x = np.array(
+    c_cola_x = np.sum(
         [
             2 * -X.T @ C_k.T @ C_k * rho_k * (r - (C_k @ X).T @ (C_k @ X))
             for C_k, rho_k in zip(list_cola, irho3_vec)
-        ]
+        ],
+        axis=0,
     )
     c_cola_u = np.zeros(len(U))
     c_cola = np.hstack((c_cola_x, c_cola_u))
@@ -50,14 +51,31 @@ def grad_penalty(X, U, Irho, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola)
 
 
 # augmented lagrangian
-def L_v(mu_v, lam, Irho, J_v, D, C):
+def L_v(u_v, N, n, mu, lam, Irho, J_v, D, C):
     """Augmented Lagrangian of one player"""
-    return J_v + mu_v.T @ D + lam.T @ C + 0.5 * C.T @ Irho @ C
+    # get player
+    ind = u_v * N * n
+    mu_v = mu[ind : ind + N * n]
+    D_v = D[ind : ind + N * n]
+
+    return J_v + mu_v.T @ D_v + lam.T @ C + 0.5 * C.T @ Irho @ C
 
 
-def grad_L_v(mu_v, lam, grad_J_v, grad_D, grad_C, grad_penalty):
+def grad_L_v(u_v, N, n, m, mu, lam, grad_J_v, grad_D, grad_C, grad_penalty):
     """gradient of Augmented Lagrangian of one player wrt X, U"""
-    return grad_J_v + mu_v.T @ grad_D + lam.T @ grad_C + grad_penalty
+    # get player
+    ind_x = u_v * N * n
+    ind_u = u_v * N * m
+
+    mu_v = np.zeros(np.shape(mu))
+    mu_v[ind_x : ind_x + N * n] = mu[ind_x : ind_x + N * n]
+
+    grad_D_v = np.zeros(np.shape(grad_D))
+    grad_D_v[ind_x : ind_x + N * n, ind_u : ind_u + N * m] = grad_D[
+        ind_x : ind_x + N * n, ind_u : ind_u + N * m
+    ]
+
+    return grad_J_v + mu_v.T @ grad_D_v + lam.T @ grad_C + grad_penalty
 
 
 def grad_aug_lagrangian(
@@ -91,7 +109,7 @@ def grad_aug_lagrangian(
     C = constraints.C(X, U, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola)
 
     # compute new penalty matrix
-    Irho = Irho(C, lam, rho)
+    I_rho = Irho(C, lam, rho)
 
     # compute derivative of augmented lagrangian
     list_grad_J_v = [
@@ -101,14 +119,14 @@ def grad_aug_lagrangian(
     grad_C = constraints.grad_C(
         X, U, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola
     )
-    grad_penalty = grad_penalty(
-        X, U, Irho, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola
+    grad_C_penalty = grad_penalty(
+        X, U, I_rho, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola
     )
 
     # compte gradient of aug lagrangian for each player
     g_players = [
-        grad_L_v(mu_v, lam, grad_J_v, grad_D, grad_C, grad_penalty)
-        for mu_v, grad_J_v in zip(np.split(mu, M), list_grad_J_v)
+        grad_L_v(u_v, N, n, m, mu, lam, grad_J_v, grad_D, grad_C, grad_C_penalty)
+        for u_v, grad_J_v in enumerate(list_grad_J_v)
     ]
     g_players.append(dynamics.D(X, U, A_sys, B_sys, E_sys, x0))
     return np.hstack(g_players)

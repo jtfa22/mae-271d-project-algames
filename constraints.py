@@ -19,7 +19,7 @@ def get_player_wall_y(y, r, N, n):
     """Wall inequality for one player: C_wall_ineq * X_v - D_wall_ineq <= 0"""
     c_wall_ineq, d_wall_ineq = get_linear_wall_y(y, r, n)
     C_wall_ineq = linalg.block_diag(*([c_wall_ineq] * N))
-    D_wall_ineq = np.vstack(([d_wall_ineq] * N))
+    D_wall_ineq = np.array(([d_wall_ineq] * N))
     return C_wall_ineq, D_wall_ineq
 
 
@@ -27,7 +27,7 @@ def get_system_wall_y(y, r, M, N, n):
     """Wall inequality for all players: C_wall_sys * X - D_wall_sys <= 0"""
     C_wall_ineq, D_wall_ineq = get_player_wall_y(y, r, N, n)
     C_wall_sys = linalg.block_diag(*([C_wall_ineq] * M))
-    D_wall_sys = np.vstack(([D_wall_ineq] * M))
+    D_wall_sys = np.tile(D_wall_ineq, M)
     return C_wall_sys, D_wall_sys
 
 
@@ -51,7 +51,7 @@ def get_linear_input_bound(m, max_x=5, max_y=5):
     f_ineq[1, ind_x] = -1
     f_ineq[2, ind_y] = 1
     f_ineq[3, ind_y] = -1
-    g_ineq = np.hstack((np.ones((2, 1)) * max_x, np.ones((2, 1)) * max_y))
+    g_ineq = np.array(([max_x] * 2 + [max_y] * 2))
     return f_ineq, g_ineq
 
 
@@ -59,7 +59,7 @@ def get_player_input_bound(N, m, max_x=5, max_y=5):
     """Control input inequality for one player: F_ineq * X_v - G_ineq <= 0"""
     f_ineq, g_ineq = get_linear_input_bound(m, max_x, max_y)
     F_ineq = linalg.block_diag(*([f_ineq] * N))
-    G_ineq = np.vstack(([g_ineq] * N))
+    G_ineq = np.tile(g_ineq, N)
     return F_ineq, G_ineq
 
 
@@ -67,7 +67,7 @@ def get_system_input_bound(M, N, m, max_x=5, max_y=5):
     """Control input inequality for all players: F_sys * X - G_sys <= 0"""
     F_ineq, G_ineq = get_player_input_bound(N, m, max_x, max_y)
     F_sys = linalg.block_diag(*([F_ineq] * M))
-    G_sys = np.vstack(([G_ineq] * M))
+    G_sys = np.tile(G_ineq, M)
     return F_sys, G_sys
 
 
@@ -120,13 +120,15 @@ def grad_C_cola(X, U, r, list_cola):
 
 # all constraints combined
 def C(X, U, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola):
+    """Constraints inequality of system (vector)"""
     c_wall = C_wall(X, U, C_wall_sys, D_wall_sys)
     c_input = C_input(X, U, F_sys, G_sys)
     c_cola = C_cola(X, U, r, list_cola)
-    return np.vstack((c_wall, c_input, c_cola))
+    return np.concatenate((c_wall, c_input, c_cola))
 
 
 def grad_C(X, U, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola):
+    """Gradient of constraints inequality of system (matrix)"""
     c_wall = grad_C_wall(X, U, C_wall_sys, D_wall_sys)
     c_input = grad_C_input(X, U, F_sys, G_sys)
     c_cola = grad_C_cola(X, U, r, list_cola)

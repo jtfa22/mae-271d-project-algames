@@ -41,8 +41,9 @@ def grad_J_v(X, U, u_v, Q, Qf, R, M, N, n, m, xf):
 
     # wrt u
     ind = u_v * N * m
-    Uv = U[ind : ind + N * m]
-    R_sys = linalg.block_diag(*([R] * N))
-    J_u = Uv.T @ R_sys
+    U_v = np.zeros(np.shape(U))
+    U_v[ind : ind + N * m] = U[ind : ind + N * m]
+    R_sys = linalg.block_diag(*([R] * M * N))
+    J_u = U_v.T @ R_sys
 
     return np.hstack((J_x, J_u))

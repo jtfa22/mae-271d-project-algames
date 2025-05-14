@@ -4,6 +4,8 @@
 import numpy as np
 from scipy import linalg
 
+from . import constraints, dynamics, objective
+
 
 # penalty matrix
 def Irho(C, lam, rho):
@@ -12,8 +14,7 @@ def Irho(C, lam, rho):
     return np.diag(irho_vec)
 
 
-def grad_penalty(X, U, Irho, C_wall_sys, D_wall_sys, F_sys, G_sys, r,
-                 list_cola):
+def grad_penalty(X, U, Irho, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola):
     """gradient of 1/2 * C.T @ Irho @ C wrt X, U"""
     irho_vec = np.diag(Irho)
 
@@ -26,7 +27,7 @@ def grad_penalty(X, U, Irho, C_wall_sys, D_wall_sys, F_sys, G_sys, r,
 
     # input
     size_input = np.shape(F_sys)[0]
-    Irho2 = np.diag(irho_vec[size_wall:size_wall + size_input])
+    Irho2 = np.diag(irho_vec[size_wall : size_wall + size_input])
     c_input_x = np.zeros(len(X))
     c_input_u = U.T @ F_sys.T @ Irho2 @ F_sys
     c_input = np.hstack((c_input_x, c_input_u))
@@ -34,11 +35,13 @@ def grad_penalty(X, U, Irho, C_wall_sys, D_wall_sys, F_sys, G_sys, r,
     # cola
     size_cola = len(list_cola)
     assert size_wall + size_input + size_cola == len(irho_vec)
-    irho3_vec = irho_vec[size_wall + size_input:]
-    c_cola_x = np.array([
-        2 * -X.T @ C_k.T @ C_k * rho_k * (r - (C_k @ X).T @ (C_k @ X))
-        for C_k, rho_k in zip(list_cola, irho3_vec)
-    ])
+    irho3_vec = irho_vec[size_wall + size_input :]
+    c_cola_x = np.array(
+        [
+            2 * -X.T @ C_k.T @ C_k * rho_k * (r - (C_k @ X).T @ (C_k @ X))
+            for C_k, rho_k in zip(list_cola, irho3_vec)
+        ]
+    )
     c_cola_u = np.zeros(len(U))
     c_cola = np.hstack((c_cola_x, c_cola_u))
 
@@ -57,10 +60,53 @@ def grad_L_v(mu_v, lam, grad_J_v, grad_D, grad_C, grad_penalty):
     return grad_J_v + mu_v.T @ grad_D + lam.T @ grad_C + grad_penalty
 
 
-def G(M, mu, lam, grad_J_v, grad_D, grad_C, grad_penalty):
+def grad_aug_lagrangian(
+    y,
+    M,
+    N,
+    n,
+    m,
+    lam,
+    rho,
+    Q,
+    Qf,
+    R,
+    xf,
+    A_sys,
+    B_sys,
+    E_sys,
+    C_wall_sys,
+    D_wall_sys,
+    F_sys,
+    G_sys,
+    r,
+    list_cola,
+):
     """gradient of Augmented Lagrangian of all players wrt X, U"""
+    # split y into X, U, mu
+    X, U, mu = np.split(y, [M * N * n, M * N * (n + m)])
+
+    # calculate current constraints
+    C = constraints.C(X, U, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola)
+
+    # compute new penalty matrix
+    Irho = Irho(C, lam, rho)
+
+    # compute derivative of augmented lagrangian
+    list_grad_J_v = [
+        objective.grad_J_v(X, U, u_v, Q, Qf, R, M, N, n, m, xf) for u_v in range(M)
+    ]
+    grad_D = dynamics.grad_D(X, U, A_sys, B_sys, E_sys)
+    grad_C = constraints.grad_C(
+        X, U, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola
+    )
+    grad_penalty = grad_penalty(
+        X, U, Irho, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola
+    )
+
+    # compte gradient of aug lagrangian for each player
     g_players = [
         grad_L_v(mu_v, lam, grad_J_v, grad_D, grad_C, grad_penalty)
-        for mu_v in np.split(mu, M)
+        for mu_v, grad_J_v in zip(np.split(mu, M), list_grad_J_v)
     ]
     return np.hstack(g_players)

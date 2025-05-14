@@ -83,11 +83,12 @@ def grad_C_input(X, U, F_sys, G_sys):
 
 # collision avoidance inequality constraint
 def get_system_cola(M, N, n):
-    """Collision avoidance inequality for all players: 
+    """Collision avoidance inequality for all players:
     r - (C_cola_k_v1_v2 * X).T @ (C_cola_k_v1_v2 * X) <= 0
     each C_cola matrix is formulated per timestep k, per players v1, v2"""
-    pos = np.hstack((np.eye(2), np.zeros(
-        (2, 2))))  # matrix to select position out of state
+    pos = np.hstack(
+        (np.eye(2), np.zeros((2, 2)))
+    )  # matrix to select position out of state
 
     list_cola = []
     for k in range(N):  # timestep
@@ -104,7 +105,7 @@ def get_system_cola(M, N, n):
 
 
 def C_cola(X, U, r, list_cola):
-    """collision avoidance inequality constraint: 
+    """collision avoidance inequality constraint:
     r - (C_cola_k_v1_v2 @ X).T @ (C_cola_k_v1_v2 @ X) <= 0"""
     C_k_v1_v2 = [r - (C_k @ X).T @ (C_k @ X) for C_k in list_cola]
     return np.array(C_k_v1_v2)
@@ -130,5 +131,3 @@ def grad_C(X, U, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola):
     c_input = grad_C_input(X, U, F_sys, G_sys)
     c_cola = grad_C_cola(X, U, r, list_cola)
     return np.vstack((c_wall, c_input, c_cola))
-
-# TODO gradient penalty in aug lagrangian calcs

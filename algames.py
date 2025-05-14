@@ -20,6 +20,7 @@ def ALGAMES(
         Qf,  # terminal cost matrix
         R,  # control cost matrix
         rho,  # constraint penalty value
+        eps,  # convergence tolerance
 ):
     # double integrator model
     n = 4  # state size (x, y, v_x, v_y)

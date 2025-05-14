@@ -10,13 +10,26 @@ Args:
     gamma: how to update penalty weights; gamma > 1
 
 Returns:
-    (lamb, rho): updated Lagrangian multiplier and penalty weight
+    lamb: updated Lagrangian multiplier
 """
-def dual_ascent(lamb, rho, C, X, U, ineq:bool, gamma):
+def dual_ascent_update(lamb, rho, C, X, U, ineq:bool, gamma):
     if ineq:
         lamb = max(0, lamb+rho*C(X,U))
     else:
         lamb+rho*C(X,U)
     rho = gamma*rho
 
-    return (lamb, rho)
+    return lamb
+
+
+"""Compute updated penalty weights
+
+Args: 
+    rho: penalty weight
+    gamma: how to update penalty weights; gamma > 1
+
+Returns:
+    rho: updated penalty weight
+"""
+def increasing_schedule_update(rho, gamma):
+    return rho*gamma

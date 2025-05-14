@@ -77,7 +77,9 @@ def ALGAMES(
 
         # currently uses derivative free method
         # TODO derive the 2nd derivative of Lagrangian
-        sol = optimize.root(aug_lagrangian.grad_aug_lagrangian, y, args=al_args)
+        sol = optimize.root(
+            aug_lagrangian.grad_aug_lagrangian, y, method="lm", jac=False, args=al_args
+        )
         y = sol.x
 
         # split y into X, U, mu

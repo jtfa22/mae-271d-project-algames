@@ -12,6 +12,7 @@ def generate(x0, M, N, n, m, dt):
     # integrate separately for each player, assuming
     # zero input as initial guess and all players have
     # identical dynamics
+    X = np.empty([])
     A = get_linear_dynamics( n, m, dt)[0]
     for i in range(M):
         x = x0[i]

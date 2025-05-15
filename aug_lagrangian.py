@@ -89,8 +89,8 @@ def grad_aug_lagrangian(
     Q,
     Qf,
     R,
-    x0,
-    xf,
+    list_x0,
+    list_xf,
     A_sys,
     B_sys,
     E_sys,
@@ -113,7 +113,7 @@ def grad_aug_lagrangian(
 
     # compute derivative of augmented lagrangian
     list_grad_J_v = [
-        objective.grad_J_v(X, U, u_v, Q, Qf, R, M, N, n, m, xf) for u_v in range(M)
+        objective.grad_J_v(X, U, u_v, Q, Qf, R, M, N, n, m, list_xf) for u_v in range(M)
     ]
     grad_D = dynamics.grad_D(X, U, A_sys, B_sys, E_sys)
     grad_C = constraints.grad_C(
@@ -128,5 +128,8 @@ def grad_aug_lagrangian(
         grad_L_v(u_v, N, n, m, mu, lam, grad_J_v, grad_D, grad_C, grad_C_penalty)
         for u_v, grad_J_v in enumerate(list_grad_J_v)
     ]
+    # append dynamics to root solving problem
+    x0 = np.hstack(list_x0)
     g_players.append(dynamics.D(X, U, A_sys, B_sys, E_sys, x0))
-    return np.hstack(g_players)
+    
+    return np.concatenate(g_players)

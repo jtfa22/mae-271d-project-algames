@@ -6,8 +6,9 @@ import constraints
 import dynamics
 import initial_guess
 import update_weights
-import numpy as np
 import objective
+
+import numpy as np
 from scipy import linalg, optimize
 
 
@@ -54,7 +55,7 @@ def ALGAMES(
     # ALGAMES loop - until y converge
     y = y0
     yprev = y + 2*eps*np.ones(y.shape)
-    while abs(yprev - y) > eps:  # TODO
+    while abs(yprev - y).any() > eps:  # TODO
         # solve G
         al_args = (
             M,

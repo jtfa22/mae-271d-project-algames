@@ -55,7 +55,7 @@ def ALGAMES(
     # ALGAMES loop - until y converge
     y = y0
     yprev = y + 2*eps*np.ones(y.shape)
-    while abs(yprev - y).any() > eps:  # TODO
+    while (abs(yprev - y) > eps).any() :  # TODO
         # solve G
         al_args = (
             M,

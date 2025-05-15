@@ -18,8 +18,8 @@ def ALGAMES(
     N,  # horizon
     dt,  # timestep
     r,  # collision avoidance radius
-    x0,  # list of initial states for all players
-    xf,  # list of target states for all players
+    list_x0,  # list of initial states of all players
+    list_xf,  # list of target states of all players
     Q,  # running cost matrix
     Qf,  # terminal cost matrix
     R,  # control cost matrix
@@ -65,8 +65,8 @@ def ALGAMES(
             Q,
             Qf,
             R,
-            x0,
-            xf,
+            list_x0,
+            list_xf,
             A_sys,
             B_sys,
             E_sys,

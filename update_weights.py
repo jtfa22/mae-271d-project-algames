@@ -1,3 +1,5 @@
+import numpy as np
+
 """Compute dual ascent update for a given constraint
 
 Args: 

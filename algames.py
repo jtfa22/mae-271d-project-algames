@@ -4,6 +4,8 @@
 import aug_lagrangian
 import constraints
 import dynamics
+import initial_guess
+import update_weights
 import numpy as np
 import objective
 from scipy import linalg, optimize
@@ -45,12 +47,14 @@ def ALGAMES(
     list_cola = constraints.get_system_cola(M, N, n)
 
     # create initial guess
-    y0 = ...  # TODO [X, U, mu]
-    lam = ...
+    y0, X_guess, U_guess, mu_guess = initial_guess.generate(list_x0, M, N, n, m, dt)  # [X, U, mu]
+    C = constraints.C(X_guess, U_guess, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola)
+    lam = np.ones((len(C),))*0.5   # start with lighter penalty weights
 
     # ALGAMES loop - until y converge
     y = y0
-    while 0.0 > eps:  # TODO
+    yprev = y + 2*eps*np.ones(y.shape)
+    while abs(yprev - y) > eps:  # TODO
         # solve G
         al_args = (
             M,
@@ -75,8 +79,10 @@ def ALGAMES(
             list_cola,
         )
 
+        yprev = y
+
         # currently uses derivative free method
-        # TODO derive the 2nd derivative of Lagrangian
+        # TODO derive the 2nd derivative of Lagrangian (if we have time)
         sol = optimize.root(
             aug_lagrangian.grad_aug_lagrangian, y, method="lm", jac=False, args=al_args
         )
@@ -89,5 +95,9 @@ def ALGAMES(
         C = constraints.C(X, U, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola)
 
         # dual ascent penalty update
+        # current implementation only has ineq constraints
+        lam = update_weights.dual_ascent_update(lam, rho, C, len(C))     
+        rho = update_weights.increasing_schedule_update(rho, gamma)
 
     # return trajectory
+    return X, U

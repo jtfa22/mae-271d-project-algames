@@ -23,4 +23,4 @@ def generate(x0, M, N, n, m, dt):
     mu = np.ones((M*N*n,)) # guess multipliers of 1
 
     y0 = np.hstack(X,U,mu)
-    return y0
+    return y0, X, U, mu

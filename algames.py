@@ -47,8 +47,9 @@ def ALGAMES(
     list_cola = constraints.get_system_cola(M, N, n)
 
     # create initial guess
-    y0 = initial_guess.generate(x0, M, N, n, m, dt)  # [X, U, mu]
-    lam = np.ones((3,))*0.5   # start with lighter penalty weights
+    y0, X_guess, U_guess, mu_guess = initial_guess.generate(list_x0, M, N, n, m, dt)  # [X, U, mu]
+    C = constraints.C(X_guess, U_guess, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola)
+    lam = np.ones((len(C),))*0.5   # start with lighter penalty weights
 
     # ALGAMES loop - until y converge
     y = y0
@@ -94,8 +95,8 @@ def ALGAMES(
         C = constraints.C(X, U, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola)
 
         # dual ascent penalty update
-        # current implementation only has 3 constraints, all ineq
-        lam = update_weights.dual_ascent_update(lam, rho, C, 3)     
+        # current implementation only has ineq constraints
+        lam = update_weights.dual_ascent_update(lam, rho, C, len(C))     
         rho = update_weights.increasing_schedule_update(rho, gamma)
 
     # return trajectory

@@ -7,8 +7,7 @@ import initial_guess
 
 from scipy import linalg
 import numpy as np
-import matplotlib as plt
-
+import matplotlib.pyplot as plt
 
 # M players
 M = 2
@@ -47,13 +46,12 @@ R = np.eye(m)
 A, B = get_linear_dynamics(n, m, dt)
 
 # initial state
-x0 = [np.zeros(n)]*n
-y0, X, U, mu = initial_guess.generate(x0, M, N, n, m, dt)
-list_x0 = [np.zeros((n,))]*M
-list_xf = [np.array([3, 3, 0.2, 0.2])]*M
+list_x0 = [np.array([ 0, 0, 0, 0]), np.array([ 2, 2, 0, 0])]            # TODO: get random M states
+y0, X, U, mu = initial_guess.generate(list_x0, M, N, n, m, dt)
+list_xf = [np.array([10, 10, 0.1, 0.1])]*M
 rho = 1
 gamma = 1
-eps = 1e-5
+eps = 1e-2
 constraint_wall_y = 6
 constraint_u_x_max = 5
 constraint_u_y_max = 5
@@ -77,9 +75,15 @@ X, U = ALGAMES(
         constraint_u_y_max,  # control input y bound
         )
 
-print(X)
-print(U)
-print("done")
+
+X_reshape = np.reshape(X, (M*N,n))
+x_out = X_reshape[:,0]
+y_out = X_reshape[:,1]
+vx_out = X_reshape[:,2]
+vy_out = X_reshape[:,3]
+
+plt.plot(x_out)
+plt.show()
 
 
 

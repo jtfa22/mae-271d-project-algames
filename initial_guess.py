@@ -1,6 +1,7 @@
 import numpy as np
 from dynamics import get_linear_dynamics
 
+
 # default guess is no control inputs
 def generate(x0, M, N, n, m, dt):
     # x0: list of (n,) numpy arrays

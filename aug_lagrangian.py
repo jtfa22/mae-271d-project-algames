@@ -100,6 +100,7 @@ def grad_aug_lagrangian(
     G_sys,
     r,
     list_cola,
+    dynamics_mult,
 ):
     """gradient of Augmented Lagrangian of all players wrt X, U"""
     # split y into X, U, mu
@@ -130,6 +131,6 @@ def grad_aug_lagrangian(
     ]
     # append dynamics to root solving problem
     x0 = np.hstack(list_x0)
-    g_players.append(dynamics.D(X, U, A_sys, B_sys, E_sys, x0))
-    
+    g_players.append(dynamics.D(X, U, A_sys, B_sys, E_sys, x0) * dynamics_mult)
+
     return np.concatenate(g_players)

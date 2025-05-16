@@ -5,10 +5,9 @@ import aug_lagrangian
 import constraints
 import dynamics
 import initial_guess
-import update_weights
-import objective
-
 import numpy as np
+import objective
+import update_weights
 from scipy import linalg, optimize
 
 
@@ -30,6 +29,8 @@ def ALGAMES(
     constraint_wall_y,  # y value of horizontal wall
     constraint_u_x_max,  # control input x bound
     constraint_u_y_max,  # control input y bound
+    max_iter,  # maximum number of iterations
+    dynamics_mult=1000,  # multiplier on dynamics in root finding problem
 ):
     # double integrator model
     n = 4  # state size (x, y, v_x, v_y)
@@ -48,14 +49,21 @@ def ALGAMES(
     list_cola = constraints.get_system_cola(M, N, n)
 
     # create initial guess
-    y0, X_guess, U_guess, mu_guess = initial_guess.generate(list_x0, M, N, n, m, dt)  # [X, U, mu]
-    C = constraints.C(X_guess, U_guess, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola)
-    lam = np.ones((len(C),))*0.5   # start with lighter penalty weights
+    y0, X_guess, U_guess, mu_guess = initial_guess.generate(
+        list_x0, M, N, n, m, dt
+    )  # [X, U, mu]
+    C = constraints.C(
+        X_guess, U_guess, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola
+    )
+    # lam = np.ones((len(C),))*0.5   # start with lighter penalty weights
+    lam = np.zeros(len(C))
 
     # ALGAMES loop - until y converge
     y = y0
-    yprev = y + 2*eps*np.ones(y.shape)
-    while (abs(yprev - y) > eps).any() :  # TODO
+    yprev = y + 2 * eps * np.ones(y.shape)
+
+    iter = 0
+    while (abs(yprev - y) > eps).any() and iter < max_iter:  # TODO
         # solve G
         al_args = (
             M,
@@ -78,6 +86,7 @@ def ALGAMES(
             G_sys,
             r,
             list_cola,
+            dynamics_mult,
         )
 
         yprev = y
@@ -88,6 +97,7 @@ def ALGAMES(
             aug_lagrangian.grad_aug_lagrangian, y, method="lm", jac=False, args=al_args
         )
         y = sol.x
+        print(np.linalg.norm(y, np.inf))
 
         # split y into X, U, mu
         X, U, mu = np.split(y, [M * N * n, M * N * (n + m)])
@@ -97,8 +107,10 @@ def ALGAMES(
 
         # dual ascent penalty update
         # current implementation only has ineq constraints
-        lam = update_weights.dual_ascent_update(lam, rho, C, len(C))     
+        lam = update_weights.dual_ascent_update(lam, rho, C, len(C))
         rho = update_weights.increasing_schedule_update(rho, gamma)
+
+        iter += 1
 
     # return trajectory
     return X, U

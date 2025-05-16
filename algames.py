@@ -55,8 +55,7 @@ def ALGAMES(
     C = constraints.C(
         X_guess, U_guess, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola
     )
-    # lam = np.ones((len(C),))*0.5   # start with lighter penalty weights
-    lam = np.zeros(len(C))
+    lam = np.ones((len(C),))*0.5   # start with lighter penalty weights
 
     # ALGAMES loop - until y converge
     y = y0

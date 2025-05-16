@@ -21,7 +21,7 @@ def grad_penalty(X, U, Irho, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola)
     # wall
     size_wall = np.shape(C_wall_sys)[0]
     Irho1 = np.diag(irho_vec[:size_wall])
-    c_wall_x = X.T @ C_wall_sys.T @ Irho1 @ C_wall_sys
+    c_wall_x = (C_wall_sys @ X - D_wall_sys).T @ Irho1 @ C_wall_sys
     c_wall_u = np.zeros(len(U))
     c_wall = np.hstack((c_wall_x, c_wall_u))
 
@@ -29,7 +29,7 @@ def grad_penalty(X, U, Irho, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola)
     size_input = np.shape(F_sys)[0]
     Irho2 = np.diag(irho_vec[size_wall : size_wall + size_input])
     c_input_x = np.zeros(len(X))
-    c_input_u = U.T @ F_sys.T @ Irho2 @ F_sys
+    c_input_u = (F_sys @ U - G_sys).T @ Irho2 @ F_sys
     c_input = np.hstack((c_input_x, c_input_u))
 
     # cola

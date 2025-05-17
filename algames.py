@@ -55,7 +55,8 @@ def ALGAMES(
     C = constraints.C(
         X_guess, U_guess, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola
     )
-    lam = np.ones((len(C),))*0.5   # start with lighter penalty weights
+
+    lam = np.zeros(len(C))
 
     # ALGAMES loop - until y converge
     y = y0
@@ -90,19 +91,24 @@ def ALGAMES(
 
         yprev = y
 
-        # currently uses derivative free method
-        # TODO derive the 2nd derivative of Lagrangian (if we have time)
+        # use solver
         sol = optimize.root(
-            aug_lagrangian.grad_aug_lagrangian, y, method="lm", jac=False, args=al_args
+            aug_lagrangian.grad_aug_lagrangian,
+            y,
+            method="lm",
+            jac=aug_lagrangian.hess_aug_lagrangian,
+            args=al_args,
         )
         y = sol.x
-        print(np.linalg.norm(y, np.inf))
 
         # split y into X, U, mu
         X, U, mu = np.split(y, [M * N * n, M * N * (n + m)])
 
         #  calculate new constraints
         C = constraints.C(X, U, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola)
+
+        # debug print
+        print(f"{iter} y_max={round(max(y),3)} rho={rho} C_vio={round(max(C),3)}")
 
         # dual ascent penalty update
         # current implementation only has ineq constraints

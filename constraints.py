@@ -41,6 +41,16 @@ def grad_C_wall(X, U, C_wall_sys, D_wall_sys):
     return np.hstack((C_wall_sys, np.zeros((np.shape(C_wall_sys)[0], len(U)))))
 
 
+def hess_C_wall(X, U, mu, C_wall_sys, D_wall_sys):
+    """hessian wrt X, U, mu"""
+    len_xu = len(X) + len(U)
+    grad_C_wall = np.hstack(
+        (C_wall_sys, np.zeros((np.shape(C_wall_sys)[0], len(U))), C_wall_sys)
+    )
+    matrix = np.zeros(np.shape(grad_C_wall))
+    return np.array([matrix] * len_xu)
+
+
 # control input inequality constraint
 def get_linear_input_bound(m, max_x=5, max_y=5):
     """Control inequality for a single player at one timestep: f_ineq * x_k - g_ineq <= 0"""
@@ -81,10 +91,18 @@ def grad_C_input(X, U, F_sys, G_sys):
     return np.hstack((np.zeros((np.shape(F_sys)[0], len(X))), F_sys))
 
 
+def hess_C_input(X, U, mu, F_sys, G_sys):
+    """hessian wrt X, U, mu"""
+    len_xu = len(X) + len(U)
+    grad_C_input = np.hstack((np.zeros((np.shape(F_sys)[0], len(X) * 2)), F_sys))
+    matrix = np.zeros(np.shape(grad_C_input))
+    return np.array([matrix] * len_xu)
+
+
 # collision avoidance inequality constraint
 def get_system_cola(M, N, n):
     """Collision avoidance inequality for all players:
-    r - (C_cola_k_v1_v2 * X).T @ (C_cola_k_v1_v2 * X) <= 0
+    r^2 - (C_cola_k_v1_v2 * X).T @ (C_cola_k_v1_v2 * X) <= 0
     each C_cola matrix is formulated per timestep k, per players v1, v2"""
     pos = np.hstack(
         (np.eye(2), np.zeros((2, 2)))
@@ -106,7 +124,7 @@ def get_system_cola(M, N, n):
 
 def C_cola(X, U, r, list_cola):
     """collision avoidance inequality constraint:
-    r - (C_cola_k_v1_v2 @ X).T @ (C_cola_k_v1_v2 @ X) <= 0"""
+    r^2 - (C_cola_k_v1_v2 @ X).T @ (C_cola_k_v1_v2 @ X) <= 0"""
     C_k_v1_v2 = [r**2 - (C_k @ X).T @ (C_k @ X) for C_k in list_cola]
     return np.array(C_k_v1_v2)
 
@@ -116,6 +134,30 @@ def grad_C_cola(X, U, r, list_cola):
     C_x = np.vstack([-X.T @ C_k.T @ C_k for C_k in list_cola])
     C_u = np.zeros((np.shape(C_x)[0], len(U)))
     return np.hstack((C_x, C_u))
+
+
+def hess_C_cola(X, U, mu, r, list_cola):
+    """hessian wrt X, U, mu"""
+    len_xu = len(X) + len(U)
+    len_y = len(X) + len(U) + len(mu)
+    C_xu = np.dstack(
+        [
+            np.vstack(
+                (
+                    np.hstack(
+                        (
+                            -C_k.T @ C_k,
+                            np.zeros((len(X), len(U))),
+                            np.zeros((len(X), len(mu))),
+                        )
+                    ),
+                    np.zeros((len(U), len_y)),
+                )
+            )
+            for C_k in list_cola
+        ]
+    )
+    return np.reshape(C_xu, (len_xu, -1, len_y))
 
 
 # all constraints combined
@@ -133,3 +175,11 @@ def grad_C(X, U, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola):
     c_input = grad_C_input(X, U, F_sys, G_sys)
     c_cola = grad_C_cola(X, U, r, list_cola)
     return np.vstack((c_wall, c_input, c_cola))
+
+
+def hess_C(X, U, mu, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola):
+    """Hessian of constraints inequality of system (matrix)"""
+    c_wall = hess_C_wall(X, U, mu, C_wall_sys, D_wall_sys)
+    c_input = hess_C_input(X, U, mu, F_sys, G_sys)
+    c_cola = hess_C_cola(X, U, mu, r, list_cola)
+    return np.concatenate((c_wall, c_input, c_cola), axis=1)

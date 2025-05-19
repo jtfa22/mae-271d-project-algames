@@ -63,7 +63,7 @@ def ALGAMES(
     yprev = y + 2 * eps * np.ones(y.shape)
 
     iter = 0
-    while (abs(yprev - y) > eps).any() and max(C) > eps and iter < max_iter:  # TODO
+    while ((abs(yprev - y) > eps).any() or max(C) > eps) and iter < max_iter:  # TODO
         # solve G
         al_args = (
             M,

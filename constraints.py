@@ -107,7 +107,7 @@ def get_system_cola(M, N, n):
 def C_cola(X, U, r, list_cola):
     """collision avoidance inequality constraint:
     r - (C_cola_k_v1_v2 @ X).T @ (C_cola_k_v1_v2 @ X) <= 0"""
-    C_k_v1_v2 = [r - (C_k @ X).T @ (C_k @ X) for C_k in list_cola]
+    C_k_v1_v2 = [r**2 - (C_k @ X).T @ (C_k @ X) for C_k in list_cola]
     return np.array(C_k_v1_v2)
 
 

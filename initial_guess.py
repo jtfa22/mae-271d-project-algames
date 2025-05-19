@@ -1,6 +1,7 @@
 import numpy as np
 from dynamics import get_linear_dynamics
 
+
 # default guess is no control inputs
 def generate(x0, M, N, n, m, dt):
     # x0: list of (n,) numpy arrays
@@ -21,7 +22,7 @@ def generate(x0, M, N, n, m, dt):
             X = np.hstack((X, x))
             
     U = np.zeros((M*N*m,)) # guess zero input
-    mu = np.ones((M*N*n,)) # guess multipliers of 1
+    mu = np.zeros((M*N*n,)) # guess multipliers of zero
 
     y0 = np.hstack((X,U,mu))
     return y0, X, U, mu

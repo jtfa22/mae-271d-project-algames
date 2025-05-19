@@ -16,7 +16,7 @@ def dual_ascent_update(lamb, rho, C, k_nci):
 
     # ineq constraints: lambda = max(0, lambda + rho*C)
     for i in range(k_nci):
-        lamb[i] = max(0, lamb)
+        lamb[i] = max(0, lamb[i])
 
     return lamb
 

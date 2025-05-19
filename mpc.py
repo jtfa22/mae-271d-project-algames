@@ -2,148 +2,79 @@
 # MPC
 
 from algames import ALGAMES
-from dynamics import get_linear_dynamics
-import initial_guess
-
-from scipy import linalg
 import numpy as np
-import matplotlib.pyplot as plt
-
-# M players
-M = 2
-
-# N horizon length
-N = 10
-
-# n state size
-n = 4  # (x, y, v_x, v_y)
-
-# m control input size
-m = 2  # (a_x, a_y)
-
-# simulation length
-sim_length = 10
-
-# timestep
-dt = 0.1 
-
-# simulation steps
-L = int(sim_length/dt)
-
-# collision avoidance radius
-r = 0.5
-
-# running cost matrix
-Q = np.eye(n)
-
-# terminal cost matrix
-Qf = np.eye(n)
-
-# control cost matrix
-R = np.eye(m)
-
-# get linear dynamics
-A, B = get_linear_dynamics(n, m, dt)
-
-# initial state
-list_x0 = [np.array([ 0, 0, 0, 0]), np.array([ 2, 2, 0, 0])]            # TODO: get random M states
-y0, X, U, mu = initial_guess.generate(list_x0, M, N, n, m, dt)
-list_xf = [np.array([10, 10, 0.1, 0.1])]*M
-rho = 1
-gamma = 1
-eps = 1e-2
-constraint_wall_y = 6
-constraint_u_x_max = 5
-constraint_u_y_max = 5
 
 
-X, U = ALGAMES(
-        M,  # number players
-        N,  # horizon
-        dt,  # timestep
-        r,  # collision avoidance radius
-        list_x0,  # list of initial states
-        list_xf,  # list of target states
-        Q,  # running cost matrix
-        Qf,  # terminal cost matrix
-        R,  # control cost matrix
-        rho,  # constraint penalty value
-        gamma,  # constraint penalty schedule
-        eps,  # convergence tolerance
-        constraint_wall_y,  # y value of horizontal wall
-        constraint_u_x_max,  # control input x bound
-        constraint_u_y_max,  # control input y bound
-        )
+def MPC(    
+    M,  # number players
+    N,  # horizon
+    n,  # state size
+    m,  # control input size
+    dt,  # timestep
+    r,  # collision avoidance radius
+    list_x0,  # list of initial states of all players
+    list_xf,  # list of target states of all players
+    Q,  # running cost matrix
+    Qf,  # terminal cost matrix
+    R,  # control cost matrix
+    rho,  # constraint penalty value
+    gamma,  # constraint penalty schedule
+    eps,  # convergence tolerance
+    constraint_wall_y,  # y value of horizontal wall
+    constraint_u_x_max,  # control input x bound
+    constraint_u_y_max,  # control input y bound
+    max_iter=10,  # maximum number of iterations
+    dynamics_mult=1000,  # multiplier on dynamics in root finding problem
+):
 
+        U_mpc = np.zeros((M,m))
+        # store initial conditions
+        X_mpc = np.reshape(np.array(list_x0), (M,n))
 
-X_reshape = np.reshape(X, (M*N,n))
-x_out = X_reshape[:,0]
-y_out = X_reshape[:,1]
-vx_out = X_reshape[:,2]
-vy_out = X_reshape[:,3]
+        for i in range (N):
 
-plt.plot(x_out)
-plt.show()
+                X, U = ALGAMES(
+                        M,  # number players
+                        N,  # horizon
+                        dt,  # timestep
+                        r,  # collision avoidance radius
+                        list_x0,  # list of initial states
+                        list_xf,  # list of target states
+                        Q,  # running cost matrix
+                        Qf,  # terminal cost matrix
+                        R,  # control cost matrix
+                        rho,  # constraint penalty value
+                        gamma,  # constraint penalty schedule
+                        eps,  # convergence tolerance
+                        constraint_wall_y,  # y value of horizontal wall
+                        constraint_u_x_max,  # control input x bound
+                        constraint_u_y_max,  # control input y bound
+                        max_iter,
+                        dynamics_mult,
+                )
+                
+                x_players = np.split(X, M)
 
+                # pull out first state X for next iteration's initial condition
+                list_x0_k1 = []
+                for i, x in enumerate(x_players):
+                        x1 = x[0:n]
+                        list_x0_k1.append(x1)    
+                # update initial conditions of next iteration to the state at the first step of this trajectory
+                list_x0 = list_x0_k1
 
+                # store trajectory
+                X_mpc = np.hstack((X_mpc, np.array(list_x0_k1)))
 
+                # pull out initial input U
+                list_u = []
+                u_players = np.split(U, M)
+                for i, u in enumerate(u_players):
+                        u1 = u[0:m]
+                        list_u.append(u1)
 
+                # store control inputs
+                U_mpc = np.hstack((U_mpc, np.array(list_u)))
 
-
-
-
-# x = np.zeros((n, N+1))
-# u = np.zeros((m, N))
-# #x[0] = list_x0
-
-# q = 0
-# #for q in range(L):
-# x_cur = x[q]
-
-# # new initial state = state from applying u in previous timestep
-# list_x0 = x_cur
-
-# # find u
-# X, U = ALGAMES(
-#     M,  # number players
-#     N,  # horizon
-#     dt,  # timestep
-#     r,  # collision avoidance radius
-#     list_x0,  # list of initial states
-#     list_xf,  # list of target states
-#     Q,  # running cost matrix
-#     Qf,  # terminal cost matrix
-#     R,  # control cost matrix
-#     rho,  # constraint penalty value
-#     gamma,  # constraint penalty schedule
-#     eps,  # convergence tolerance
-#     constraint_wall_y,  # y value of horizontal wall
-#     constraint_u_x_max,  # control input x bound
-#     constraint_u_y_max,  # control input y bound
-#     )
-# # pull out first u
-# U_1 = U[0]
-
-# # update state using first control input u 
-# # x[k+1] = A x[k] + B u[k]
-# x_k_1 = A @ x_cur + B @ U_1
-
-# #    x[q+1] = x_k_1
-
-
-
-# # solve optimal control problem to get optimal ut
-# # simulate - apply first control input 
-
-
-
-# # plot car trajectory
-# # plt.plot()
-# # plt.plot(x[:,0])
-# # plt.plot(x[:,1])
-# # plt.xlabel("X")
-# # plt.ylabel("Y")
-# # plt.legend()
-# # plt.show()
-
-# # plot control input
+        # return mpc trajectory
+        return X_mpc, U_mpc

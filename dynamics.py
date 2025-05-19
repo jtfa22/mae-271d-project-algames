@@ -43,3 +43,13 @@ def D(X, U, A_sys, B_sys, E_sys, x0):
 def grad_D(X, U, A_sys, B_sys, E_sys):
     """gradient wrt X, U"""
     return np.hstack((A_sys, B_sys))
+
+
+def hess_D(X, U, mu, A_sys, B_sys, E_sys):
+    """gradient wrt X, U, mu"""
+    len_xu = len(X) + len(U)
+    # wrt x , u
+    matrix = np.zeros(np.shape(np.hstack((A_sys, B_sys))))
+    # wrt mu
+    matrix = np.hstack((matrix, np.eye(len(X))))
+    return np.array([matrix] * len_xu)

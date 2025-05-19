@@ -47,3 +47,21 @@ def grad_J_v(X, U, u_v, Q, Qf, R, M, N, n, m, list_xf):
     J_u = U_v.T @ R_sys
 
     return np.hstack((J_x, J_u))
+
+
+def hess_J_v(X, U, mu, u_v, Q, Qf, R, M, N, n, m, list_xf):
+    """hessian wrt X, U, mu"""
+    len_xu = len(X) + len(U)
+
+    # wrt x
+    Q_sys = linalg.block_diag(*(([Q] * (N - 1) + [Qf]) * M))
+    J_x = np.vstack((Q_sys, np.zeros((len(U), len(X)))))
+
+    # wrt u
+    R_sys = linalg.block_diag(*([R] * M * N))
+    J_u = np.vstack((np.zeros((len(X), len(U))), R_sys))
+
+    # wrt mu
+    J_mu = np.zeros((len_xu, len(mu)))
+
+    return np.hstack((J_x, J_u, J_mu))

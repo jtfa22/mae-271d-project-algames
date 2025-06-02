@@ -55,8 +55,8 @@ def MPC_noisy(
                         dynamics_mult,
                 )
                 
-                # generate noise to perturb state
-                noise = np.random.normal( mean, sigma, n)
+                # # generate noise to perturb state
+                # noise = np.random.normal( mean, sigma, n)
 
                 x_players = np.split(X, M)
 
@@ -65,6 +65,8 @@ def MPC_noisy(
                 for i, x in enumerate(x_players):
                         x1 = x[0:n]
                         list_x0_k1.append(x1)    
+                        # generate noise to perturb state
+                        noise = np.random.normal( mean, sigma, n)
                 # update initial conditions of next iteration to the state at the first step of this trajectory
                 list_x0 = list_x0_k1 + noise
 

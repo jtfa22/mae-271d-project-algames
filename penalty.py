@@ -36,7 +36,7 @@ def grad_penalty(X, U, Irho, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_cola)
     irho3_vec = irho_vec[size_wall + size_input :]
     c_cola_x = np.sum(
         [
-            2 * X.T @ C_k.T @ C_k * rho_k * (r**2 - (C_k @ X).T @ (C_k @ X))
+            -2 * X.T @ C_k.T @ C_k * rho_k * (r**2 - (C_k @ X).T @ (C_k @ X))
             for C_k, rho_k in zip(list_cola, irho3_vec)
         ],
         axis=0,
@@ -80,7 +80,7 @@ def hess_penalty(X, U, mu, Irho, C_wall_sys, D_wall_sys, F_sys, G_sys, r, list_c
         [
             np.vstack(
                 (
-                    -2 * C_k.T @ C_k * rho_k * (r**2 - (C_k @ X).T @ (C_k @ X)),
+                    2 * C_k.T @ C_k * rho_k * (r**2 - (C_k @ X).T @ (C_k @ X)),
                     np.zeros((len(U), len(X))),
                 )
             )

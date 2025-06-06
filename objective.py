@@ -6,25 +6,20 @@ from scipy import linalg
 
 
 # quadratic cost of player
-def J_v(X, U, u_v, Q, Qf, R, M, N, n, m, xf):
+def J_v(X, U, u_v, Q, Qf, R, M, N, n, m, list_xf):
     """objective function of player v (index)"""
     cost = 0
 
     # trajectory states
-    for k in range(0, N - 2):
+    for k in range(N):
         for v in range(M):
             ind = (v * N + k) * n
             xk = X[ind : ind + n]
-            cost += 0.5 * (xk - xf).T @ Q @ (xk - xf)
-
-    # final state
-    k = N - 1
-    ind = (v * N + k) * n
-    xk = X[ind : ind + n]
-    cost += 0.5 * (xk - xf).T @ Qf @ (xk - xf)
+            xf = list_xf[v]
+            cost += 0.5 * (xk - xf).T @ (Q if k < N - 1 else Qf) @ (xk - xf)
 
     # player control input
-    for k in range(0, N - 1):
+    for k in range(N):
         ind = (u_v * N + k) * m
         uk = U[ind : ind + m]
         cost += 0.5 * uk.T @ R @ uk

@@ -33,6 +33,9 @@ def MPC_noisy(
         # store initial conditions
         X_mpc = np.reshape(np.array(list_x0), (M,n))
 
+        # store all trajectories over horizon
+        X_hist = np.empty((M*N*n))
+
         for i in range (N):
 
                 X, U = ALGAMES(
@@ -67,6 +70,7 @@ def MPC_noisy(
                         list_x0_k1.append(x1)    
                         # generate noise to perturb state
                         noise = np.random.normal( mean, sigma, n)
+                        #TODO: should check here that the perturbation doesnt cause a cola violation
                 # update initial conditions of next iteration to the state at the first step of this trajectory
                 list_x0 = list_x0_k1 + noise
 
@@ -83,5 +87,7 @@ def MPC_noisy(
                 # store control inputs
                 U_mpc = np.hstack((U_mpc, np.array(list_u)))
 
+                X_hist = np.vstack((X_hist, X))
+
         # return mpc trajectory
-        return X_mpc, U_mpc
+        return X_mpc, U_mpc, X_hist

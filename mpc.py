@@ -31,6 +31,9 @@ def MPC(
         # store initial conditions
         X_mpc = np.reshape(np.array(list_x0), (M,n))
 
+        # store all trajectories over horizon
+        X_hist = np.empty((M*N*n))
+
         for i in range (N):
 
                 X, U = ALGAMES(
@@ -76,5 +79,7 @@ def MPC(
                 # store control inputs
                 U_mpc = np.hstack((U_mpc, np.array(list_u)))
 
+                X_hist = np.vstack((X_hist, X))
+
         # return mpc trajectory
-        return X_mpc, U_mpc
+        return X_mpc, U_mpc, X_hist
